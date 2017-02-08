@@ -36,45 +36,48 @@ public class PokemonVisualizer {
 			bi.setRGB(i, height / 2, Color.WHITE.getRGB());
 		for (int j = 0; j < height; j++)
 			bi.setRGB(width / 2, j, Color.WHITE.getRGB());
-		List<Tuple3<Integer, Integer, Integer>> coords = getPokemonCoords(context);
-		int maxlng = Integer.MIN_VALUE, maxlat = Integer.MIN_VALUE, minlng = Integer.MAX_VALUE,
-				minlat = Integer.MAX_VALUE;
+		for (int i = 0; i < 160; i += 10) {
+			List<Tuple3<Integer, Integer, Integer>> coords = getPokemonCoords(context, i);
+			int maxlng = Integer.MIN_VALUE, maxlat = Integer.MIN_VALUE, minlng = Integer.MAX_VALUE,
+					minlat = Integer.MAX_VALUE;
 
-		for (Tuple3<Integer, Integer, Integer> e : coords) {
-			try {
-				if (maxlng < e._2() - height / 2)
-					maxlng = e._2() - height / 2;
-				else if (minlng > e._2() - height / 2)
-					minlng = e._2() - height / 2;
+			for (Tuple3<Integer, Integer, Integer> e : coords) {
+				try {
+					if (maxlng < e._2() - height / 2)
+						maxlng = e._2() - height / 2;
+					else if (minlng > e._2() - height / 2)
+						minlng = e._2() - height / 2;
 
-				if (maxlat < e._1() - width / 2)
-					maxlat = e._1() - width / 2;
-				else if (minlat > e._1() - width / 2)
-					minlat = e._1() - width / 2;
+					if (maxlat < e._1() - width / 2)
+						maxlat = e._1() - width / 2;
+					else if (minlat > e._1() - width / 2)
+						minlat = e._1() - width / 2;
 
-				int color = bi.getRGB(e._1(), e._2());
-				if (color == Color.black.getRGB()) {
-					color = Color.blue.getRGB();
-				} else if (color == Color.blue.getRGB()) {
-					color = Color.green.getRGB();
-				} else if (color == Color.green.getRGB()) {
-					color = Color.yellow.getRGB();
-				} else if (color == Color.yellow.getRGB()) {
-					color = Color.red.getRGB();
-				}  else if (color== Color.red.getRGB()) {
-					
-				} 
-				bi.setRGB(e._1(), e._2(), color);
-			} catch (ArrayIndexOutOfBoundsException AiOOB) {
-				System.out.println("ERRORED: " + e._1() + "," + e._2());
+					int color = bi.getRGB(e._1(), e._2());
+					if (color == Color.black.getRGB()) {
+						color = Color.blue.getRGB();
+					} else if (color == Color.blue.getRGB()) {
+						color = Color.green.getRGB();
+					} else if (color == Color.green.getRGB()) {
+						color = Color.yellow.getRGB();
+					} else if (color == Color.yellow.getRGB()) {
+						color = Color.red.getRGB();
+					} else if (color == Color.red.getRGB()) {
+
+					}
+					bi.setRGB(e._1(), e._2(), color);
+				} catch (ArrayIndexOutOfBoundsException AiOOB) {
+					System.out.println("ERRORED: " + e._1() + "," + e._2());
+				}
 			}
+			
+			ImageIO.write(bi, "PNG", new File("PokesVisualized - " + i + " ("
+					+ (int) (100d * ((double) coords.size()) / total) + "%).png"));
+			System.out.println(coords.size() + "/" + total + " pokemon mapped.");
+			System.out.println("Max: " + maxlat / scale + ", " + maxlng / scale);
+			System.out.println("Min: " + minlat / scale + ", " + minlng / scale);
+			System.out.println("Center: " + (maxlat + minlat) / (2 * scale) + ", " + (maxlng + minlng) / (2 * scale));
 		}
-		ImageIO.write(bi, "BMP", new File("PokesVisualized.bmp"));
-		System.out.println(coords.size() + "/" + total + " pokemon mapped.");
-		System.out.println("Max: " + maxlat / scale + ", " + maxlng / scale);
-		System.out.println("Min: " + minlat / scale + ", " + minlng / scale);
-		System.out.println("Center: " + (maxlat + minlat) / (2 * scale) + ", " + (maxlng + minlng) / (2 * scale));
-		
 		context.close();
 	}
 
@@ -91,13 +94,15 @@ public class PokemonVisualizer {
 		Files.write(Paths.get("TEST MAP.html"), "];".getBytes(), StandardOpenOption.APPEND);
 	}
 
-	
-	static long total = 0;
+	static double total = 0;
 
-	private static List<Tuple3<Integer, Integer, Integer>> getPokemonCoords(JavaSparkContext context) {
-		JavaRDD<String> pFile = context.textFile(Pokemon.folder + "uncommon.csv");
+	private static List<Tuple3<Integer, Integer, Integer>> getPokemonCoords(JavaSparkContext context, int i) {
+		JavaRDD<String> pFile = context.textFile(Pokemon.folder + "p12345.csv");
 		total = pFile.count();
-		JavaRDD<Pokemon> pokes = pFile.map(f -> new Pokemon(f));//.filter(p -> !Pokemon.tooCommon.contains(p.pokemon_id)).distinct();
+		JavaRDD<Pokemon> pokes = pFile.map(f -> new Pokemon(f))
+				.filter(p -> Pokemon.tooCommon
+						.subList(0, Math.min(i, Pokemon.tooCommon.size()) )
+						.contains(p.pokemon_id));
 		return pokes.map(f -> new Tuple3<Integer, Integer, Integer>((int) Math.floor((f.lat * scale) + width / 2),
 				(int) Math.floor(f.lng * scale) + height / 2, f.pokemon_id)).collect();
 	}

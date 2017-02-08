@@ -1,14 +1,16 @@
 package org.sparkexample;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Pokemon implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -17,15 +19,15 @@ public class Pokemon implements Serializable {
 	// disappear_time
 	String encounter_id = "", spawnpoint_id = "";
 	Integer pokemon_id = -1;
-	Double lat, lng;
+	Double lat, lng, rainfall, temp;
 	// String originalCSV = "";
 	Date disappear_time;
+
 	// 2016-09-08 13:32:44
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	static List<Integer> tooCommon = Arrays.asList(129, 48, 96, 133, 21, 13, 16, 69, 10, 19, 41);
 
 	public Pokemon(String csv) throws ParseException {
-		
+
 		String[] props = csv.split(",");
 		encounter_id = props[0];
 		spawnpoint_id = props[1];
@@ -33,6 +35,11 @@ public class Pokemon implements Serializable {
 		lat = Double.parseDouble(props[3]);
 		lng = Double.parseDouble(props[4]);
 		disappear_time = sdf.parse(props[5]);
+		// if weather data present
+		if (props.length > 6) {
+			rainfall = Double.valueOf(props[6]);
+			temp = Double.valueOf(props[7]);
+		}
 	}
 
 	@Override
@@ -59,19 +66,38 @@ public class Pokemon implements Serializable {
 	}
 
 	static final HashMap<Integer, String> pokedex = new HashMap<>();
+	static final HashMap<String, Integer> nameLookup = new HashMap<>();
 	static {
 		try {
 			for (String line : Files.readAllLines(Paths.get("Pokedex"))) {
 				String[] p = line.split(",");
 				pokedex.put(Integer.parseInt(p[0]), p[1]);
+				nameLookup.put(p[1], Integer.parseInt(p[0]));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+	static List<Integer> tooCommon = new ArrayList<>();
+	static {
+		try {
+			tooCommon = Files.readAllLines(Paths.get("raritylist")).stream().map(e -> e.split(",")[0])
+					.map(e -> Pokemon.getIndex(e)).collect(Collectors.toList());
+			System.out.println("Too Common___");
+			tooCommon.stream().forEachOrdered(System.out::println);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	public String getName() {
 		return pokedex.getOrDefault(this.pokemon_id, "Not found!!!");
+	}
+
+	public static Integer getIndex(String name) {
+		return nameLookup.getOrDefault(name, -1);
 	}
 
 }

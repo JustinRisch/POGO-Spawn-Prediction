@@ -1,10 +1,13 @@
 package org.sparkexample;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -12,13 +15,40 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
+import com.sun.mail.iap.ParsingException;
+
 // cell_id,encounter_id,spawn_id,pokemon_type_id,latitude,longitude,despawn_time_ms,scan_time_ms
 //encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time
 public class DataFormat {
-	static Path target = Paths.get("kempt data/p5");
+	static Path target = Paths.get("kempt data/weatherPokes");
 
 	public static void main(String[] args) throws IOException {
-		filterCommonAndDuplicateFrom("p12345.csv");
+		addWeatherDataTo("p12345.csv", Arrays.asList(6, 5));
+	}
+
+	private static void addWeatherDataTo(String file, List<Integer> ids) throws IOException {
+		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
+		JavaSparkContext context = new JavaSparkContext(conf);
+		JavaRDD<Pokemon> weatherRDD = context.textFile(t.toString()).map(f -> new Pokemon(f));
+		JavaRDD<Pokemon> pokes = context.textFile(Pokemon.folder + file).map(f -> new Pokemon(f))
+				.filter(p -> !ids.contains(p.pokemon_id));//
+		pokes = pokes.subtract(weatherRDD);
+
+		List<Pokemon> p = pokes.collect();
+		pokes = null;
+		weatherRDD = null;
+		if (!Files.exists(t))
+			Files.createFile(t);
+		try {
+			for (Pokemon poke : p) {
+				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
+				Files.write(t, (poke.toString() + "," + weather).getBytes(), StandardOpenOption.APPEND);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		context.close();
+
 	}
 
 	static Path t = Paths.get("kempt data/uncommon.csv");
@@ -29,21 +59,21 @@ public class DataFormat {
 		JavaRDD<String> pFile = context.textFile(Pokemon.folder + strings[0]);
 		for (int i = 1; i < strings.length; i++)
 			pFile = pFile.union(context.textFile(Pokemon.folder + strings[i]));
-		List<String> pokes = pFile.map(f -> new Pokemon(f)).filter(p ->!Pokemon.tooCommon.contains(p.pokemon_id))
-				.map(p -> p.toString() + "\n").distinct().collect();// 
+		List<String> pokes = pFile.map(f -> new Pokemon(f)).filter(p -> !Pokemon.tooCommon.contains(p.pokemon_id))
+				.map(p -> p.toString() + "\n").distinct().collect();//
 		Files.deleteIfExists(t);
 		Files.createFile(t);
 
 		StringBuilder sb = new StringBuilder();
 		int i = 0;
 		for (String poke : pokes) {
-			sb.append(poke); 
+			sb.append(poke);
 			i++;
 			if (i == 500) {
-				
+
 				Files.write(t, sb.toString().getBytes(), StandardOpenOption.APPEND);
 				sb = new StringBuilder();
-				i=0;
+				i = 0;
 			}
 		}
 		context.close();
