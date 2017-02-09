@@ -25,7 +25,7 @@ public class DataFormat {
 	static Path target = Paths.get("kempt data/WEATHERED");
 
 	public static void main(String[] args) throws IOException {
-		addWeatherDataTo("fixLATLONG", Arrays.asList(4, 5, 6));
+		addWeatherDataTo("fixLATLONG", Arrays.asList(1, 2, 3));
 	}
 
 	private static void checkLatLong(JavaRDD<Pokemon> p) throws InterruptedException {
@@ -51,36 +51,30 @@ public class DataFormat {
 		return returnable;
 	}
 
-	private static List<Pokemon> getPokemon(String file, List<Integer> only) {
-		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
-		JavaSparkContext context = new JavaSparkContext(conf);
-		List<Pokemon> p = context.textFile(Pokemon.folder + file).map(f -> new Pokemon(f))
-				.filter(f -> only.contains(f.pokemon_id)).collect();//
-		context.close();
-		return p;
+	private static JavaRDD<Pokemon> getPokemon(JavaSparkContext context, String file, List<Integer> only) {
+		return context.textFile(Pokemon.folder + file).map(f -> new Pokemon(f))
+				.filter(f -> only.contains(f.pokemon_id));
 	}
 
 	private static void addWeatherDataTo(String file, List<Integer> only) throws IOException {
-		List<Pokemon> p = getPokemon(file, only);
-		List<Pokemon> w = getPokemon("WEATHERED", only);
-		if (!Files.exists(target))
-			Files.createFile(target);
+		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
+		JavaSparkContext context = new JavaSparkContext(conf);
+		JavaRDD<Pokemon> p = getPokemon(context, file, only);
+		if (!Files.exists(Paths.get("WEATHERED")))
+			Files.createFile(Paths.get("WEATHERED"));
 		try {
-			for (Pokemon poke : p) {
-				if (w.contains(p)) {
-					System.out.println("Skipping...");
-					continue;
-				}
+
+			p.foreach(poke -> {
 				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
-				String out = (poke.toString() + "," + weather).replaceAll("\"", "");
-				System.out.println(out);
+				String out = (poke.toString() + "," + weather).replaceAll("\"", "") + "\n";
+				System.out.print(out);
 				Files.write(target, out.getBytes(), StandardOpenOption.APPEND);
 				Thread.sleep(6000);
-			}
+			});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		context.close();
 	}
 
 	static Path t = Paths.get("kempt data/uncommon.csv");

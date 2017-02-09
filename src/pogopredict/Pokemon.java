@@ -25,7 +25,6 @@ public class Pokemon implements Serializable {
 
 	// 2016-09-08 13:32:44
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
 	public Pokemon(String csv) throws ParseException {
 		String[] props = csv.split(",");
 		encounter_id = props[0];
@@ -35,17 +34,20 @@ public class Pokemon implements Serializable {
 		lng = Double.parseDouble(props[4]);
 		disappear_time = sdf.parse(props[5]);
 		// if weather data present
-		try {
-			if (props.length > 6) {
-				rainfall = Double.valueOf(props[6]);
-			}
-			if (props.length > 7) {
-				temp = Double.valueOf(props[7]);
-			}
-		} catch (Exception e) {
-			System.out.println("ERROR:" + csv);
-			throw e;
-		}
+		if (props.length > 6)
+			rainfall = getDoubleOrNull(props[6]);
+		if (props.length > 7)
+			temp = getDoubleOrNull(props[7]);
+	}
+
+	private Double getDoubleOrNull(String x) {
+		if (x == null)
+			return 0d;
+		x = x.trim();
+		if (x.isEmpty() || x.equalsIgnoreCase("NULL"))
+			return 0d;
+
+		return Double.valueOf(x);
 
 	}
 
@@ -62,7 +64,8 @@ public class Pokemon implements Serializable {
 	}
 
 	public boolean equals(Pokemon obj) {
-		return this.toString().equals(obj.toString());
+		return encounter_id.equals(obj.encounter_id) && spawnpoint_id.equals(obj.spawnpoint_id)
+				&& pokemon_id.equals(obj.pokemon_id) && lat.equals(obj.lat) && lng.equals(obj.lng);
 	}
 
 	public boolean isNear(Pokemon b, double radius) {
