@@ -91,8 +91,6 @@ public class Pokemon implements Serializable {
 		try {
 			tooCommon = Files.readAllLines(Paths.get("raritylist")).stream().map(e -> e.split(",")[0])
 					.map(e -> Pokemon.getIndex(e)).collect(Collectors.toList());
-			System.out.println("Too Common___");
-			tooCommon.stream().forEachOrdered(System.out::println);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
