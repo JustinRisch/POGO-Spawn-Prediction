@@ -60,10 +60,16 @@ public class DataFormat {
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
 		JavaRDD<Pokemon> p = getPokemon(context, file, only);
-		if (!Files.exists(Paths.get("WEATHERED")))
-			Files.createFile(Paths.get("WEATHERED"));
-		try {
+		if (!Files.exists(Paths.get(Pokemon.folder +"WEATHERED")))
+			Files.createFile(Paths.get(Pokemon.folder +"WEATHERED"));
+		else {
+			List<String> w = context.textFile(Pokemon.folder +"WEATHERED").filter(f->f!=null && !f.trim().replaceAll("\n", "").isEmpty()).collect();
+			List<Pokemon> pL = p.collect();
+			p = context.parallelize(pL.subList(w.size()-1, pL.size()-1));
 
+		}
+		try {
+			
 			p.foreach(poke -> {
 				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
 				String out = (poke.toString() + "," + weather).replaceAll("\"", "") + "\n";
