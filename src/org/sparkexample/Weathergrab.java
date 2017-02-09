@@ -6,8 +6,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import com.sun.mail.iap.ParsingException;
-
+import net.sf.corn.converter.ParsingException;
 import net.sf.corn.converter.json.JsTypeComplex;
 import net.sf.corn.converter.json.JsTypeList;
 import net.sf.corn.converter.json.JsTypeSimple;
@@ -42,17 +41,21 @@ public class Weathergrab {
 			throws URISyntaxException, IOException, ParsingException, net.sf.corn.converter.ParsingException {
 		HttpClient client = new HttpClient(new URI(url));
 		HttpResponse response = client.sendData(HTTP_METHOD.GET);
-		if (!response.hasError()) {
-			String jsonString = response.getData();
-			JsTypeComplex jsonResponse = (JsTypeComplex) JsonStringParser.parseJsonString(jsonString);
-			JsTypeComplex history = (JsTypeComplex) jsonResponse.get("history");
-			JsTypeList sum = (JsTypeList) history.get("dailysummary");
-			JsTypeComplex date = ((JsTypeComplex) sum.get(0));
-			JsTypeSimple precipi = (JsTypeSimple) date.get("precipi");
-			JsTypeSimple maxTempi = (JsTypeSimple) date.get("maxtempi");
-			return precipi + "," + maxTempi;
+		try {
+			if (!response.hasError()) {
+				String jsonString = response.getData();
+				JsTypeComplex jsonResponse = (JsTypeComplex) JsonStringParser.parseJsonString(jsonString);
+				JsTypeComplex history = (JsTypeComplex) jsonResponse.get("history");
+				JsTypeList sum = (JsTypeList) history.get("dailysummary");
+				JsTypeComplex date = ((JsTypeComplex) sum.get(0));
+				JsTypeSimple precipi = (JsTypeSimple) date.get("precipi");
+				JsTypeSimple maxTempi = (JsTypeSimple) date.get("maxtempi");
+				return precipi + "," + maxTempi;
+			}
+		} catch (Exception e) {
+			System.out.println("No data found.");
 		}
-		return "FAILED";
+		return "-1,-99";
 	}
 
 }

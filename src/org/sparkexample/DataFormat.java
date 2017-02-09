@@ -15,39 +15,69 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
-import com.sun.mail.iap.ParsingException;
+import com.google.common.util.concurrent.AtomicDouble;
 
 // cell_id,encounter_id,spawn_id,pokemon_type_id,latitude,longitude,despawn_time_ms,scan_time_ms
 //encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time
 public class DataFormat {
-	static Path target = Paths.get("kempt data/weatherPokes");
+	static Path target = Paths.get("kempt data/WEATHERED");
 
-	public static void main(String[] args) throws IOException {
-		addWeatherDataTo("p12345.csv", Arrays.asList(6, 5));
+	public static void main(String[] args) throws IOException, InterruptedException {
+		addWeatherDataTo("fixLATLONG", Arrays.asList(4, 5, 6));
 	}
 
-	private static void addWeatherDataTo(String file, List<Integer> ids) throws IOException {
+	private static void checkLatLong(JavaRDD<Pokemon> p) throws InterruptedException {
+		System.out.println("Total: " + p.count());
+		JavaRDD<Pokemon> temp = p.filter(f -> f.lat > 90 || f.lat < -90 || f.lng > 180 || f.lng < -180);
+		System.out.println("Errored: " + temp.count());
+		Thread.sleep(3000);
+	}
+
+	private static JavaRDD<Pokemon> fixLatLong(JavaRDD<Pokemon> p) throws IOException {
+		AtomicDouble temp = new AtomicDouble();
+		JavaRDD<Pokemon> returnable = p.map(f -> {
+			if (f.lat > 90 || f.lat < -90 || f.lng > 180 || f.lng < -180) {
+				temp.set(f.lat);
+				f.lat = f.lng;
+				f.lng = temp.get();
+			}
+			return f;
+		});
+		Files.deleteIfExists(target);
+		Files.createFile(target);
+		returnable.foreach(poke -> Files.write(target, (poke.toString() + "\n").getBytes(), StandardOpenOption.APPEND));
+		return returnable;
+	}
+
+	private static List<Pokemon> getPokemon(String file, List<Integer> only) {
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
-		JavaRDD<Pokemon> weatherRDD = context.textFile(t.toString()).map(f -> new Pokemon(f));
-		JavaRDD<Pokemon> pokes = context.textFile(Pokemon.folder + file).map(f -> new Pokemon(f))
-				.filter(p -> !ids.contains(p.pokemon_id));//
-		pokes = pokes.subtract(weatherRDD);
+		List<Pokemon> p = context.textFile(Pokemon.folder + file).map(f -> new Pokemon(f))
+				.filter(f -> only.contains(f.pokemon_id)).collect();//
+		context.close();
+		return p;
+	}
 
-		List<Pokemon> p = pokes.collect();
-		pokes = null;
-		weatherRDD = null;
-		if (!Files.exists(t))
-			Files.createFile(t);
+	private static void addWeatherDataTo(String file, List<Integer> only) throws IOException {
+		List<Pokemon> p = getPokemon(file, only);
+		List<Pokemon> w = getPokemon("WEATHERED", only);
+		if (!Files.exists(target))
+			Files.createFile(target);
 		try {
 			for (Pokemon poke : p) {
+				if (w.contains(p)) {
+					System.out.println("Skipping...");
+					continue;
+				}
 				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
-				Files.write(t, (poke.toString() + "," + weather).getBytes(), StandardOpenOption.APPEND);
+				String out = (poke.toString() + "," + weather).replaceAll("\"", "");
+				System.out.println(out);
+				Files.write(target, out.getBytes(), StandardOpenOption.APPEND);
+				Thread.sleep(6000);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		context.close();
 
 	}
 
@@ -60,7 +90,8 @@ public class DataFormat {
 		for (int i = 1; i < strings.length; i++)
 			pFile = pFile.union(context.textFile(Pokemon.folder + strings[i]));
 		List<String> pokes = pFile.map(f -> new Pokemon(f)).filter(p -> !Pokemon.tooCommon.contains(p.pokemon_id))
-				.map(p -> p.toString() + "\n").distinct().collect();//
+				.map(p -> p.toString() + "\n").distinct().collect();
+
 		Files.deleteIfExists(t);
 		Files.createFile(t);
 
@@ -91,20 +122,5 @@ public class DataFormat {
 		formatted.foreach(s -> Files.write(target, s.getBytes(), StandardOpenOption.APPEND));
 		context.close();
 	}
-	/*
-	 * private static List<Tuple3<Integer, Integer, Integer>>
-	 * getPokemonCoords(JavaSparkContext context) {
-	 * 
-	 * JavaRDD<String> pFile = context.textFile(Pokemon.folder + "p"); pFile =
-	 * pFile.union(context.textFile(Pokemon.folder + "p2")); pFile =
-	 * pFile.union(context.textFile(Pokemon.folder + "p3")); pFile =
-	 * pFile.union(context.textFile(Pokemon.folder + "p4")); pFile =
-	 * pFile.union(context.textFile(Pokemon.folder + "p5"));
-	 * 
-	 * JavaRDD<Pokemon> pokes = pFile.map(f -> new Pokemon(f)).filter(p ->
-	 * !tooCommon.contains(p.pokemon_id)); return pokes.map(f -> new
-	 * Tuple3<Integer, Integer, Integer>((int) Math.floor((f.lat * scale) +
-	 * width / 2), (int) Math.floor(f.lng * scale) + height / 2,
-	 * f.pokemon_id)).collect(); }
-	 */
+
 }

@@ -36,10 +36,18 @@ public class Pokemon implements Serializable {
 		lng = Double.parseDouble(props[4]);
 		disappear_time = sdf.parse(props[5]);
 		// if weather data present
-		if (props.length > 6) {
-			rainfall = Double.valueOf(props[6]);
-			temp = Double.valueOf(props[7]);
+		try {
+			if (props.length > 6) {
+				rainfall = Double.valueOf(props[6]);
+			}
+			if (props.length > 7) {
+				temp = Double.valueOf(props[7]);
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR:" + csv);
+			throw e;
 		}
+
 	}
 
 	@Override
@@ -47,7 +55,7 @@ public class Pokemon implements Serializable {
 		// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
 		// disappear_time
 		return String.join(",", encounter_id, spawnpoint_id, pokemon_id.toString(), lat.toString(), lng.toString(),
-				sdf.format(disappear_time));
+				sdf.format(disappear_time), rainfall + "", temp + "");
 	}
 
 	public boolean isNear(Pokemon b) {
