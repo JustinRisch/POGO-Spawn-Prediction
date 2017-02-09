@@ -27,7 +27,6 @@ public class Pokemon implements Serializable {
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	public Pokemon(String csv) throws ParseException {
-
 		String[] props = csv.split(",");
 		encounter_id = props[0];
 		spawnpoint_id = props[1];
