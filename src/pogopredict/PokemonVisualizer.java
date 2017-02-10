@@ -15,11 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
 
+@SuppressWarnings("unused")
 public class PokemonVisualizer {
 
 	static final AtomicDouble maxlat = new AtomicDouble(Double.MIN_VALUE), minlat = new AtomicDouble(Double.MAX_VALUE),
@@ -70,9 +70,9 @@ public class PokemonVisualizer {
 					System.out.println("ERRORED: " + e._1() + "," + e._2());
 				}
 			}
-			
-			ImageIO.write(bi, "PNG", new File("PokesVisualized - " + i + " ("
-					+ (int) (100d * ((double) coords.size()) / total) + "%).png"));
+
+			ImageIO.write(bi, "PNG", new File(
+					"PokesVisualized - " + i + " (" + (int) (100d * ((double) coords.size()) / total) + "%).png"));
 			System.out.println(coords.size() + "/" + total + " pokemon mapped.");
 			System.out.println("Max: " + maxlat / scale + ", " + maxlng / scale);
 			System.out.println("Min: " + minlat / scale + ", " + minlng / scale);
@@ -99,10 +99,8 @@ public class PokemonVisualizer {
 	private static List<Tuple3<Integer, Integer, Integer>> getPokemonCoords(JavaSparkContext context, int i) {
 		JavaRDD<String> pFile = context.textFile(Pokemon.folder + "p12345.csv");
 		total = pFile.count();
-		JavaRDD<Pokemon> pokes = pFile.map(f -> new Pokemon(f))
-				.filter(p -> Pokemon.tooCommon
-						.subList(0, Math.min(i, Pokemon.tooCommon.size()) )
-						.contains(p.pokemon_id));
+		JavaRDD<Pokemon> pokes = pFile.map(f -> new Pokemon(f)).filter(
+				p -> Pokemon.tooCommon.subList(0, Math.min(i, Pokemon.tooCommon.size())).contains(p.pokemon_id));
 		return pokes.map(f -> new Tuple3<Integer, Integer, Integer>((int) Math.floor((f.lat * scale) + width / 2),
 				(int) Math.floor(f.lng * scale) + height / 2, f.pokemon_id)).collect();
 	}

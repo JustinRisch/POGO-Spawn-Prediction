@@ -18,10 +18,12 @@ import weather.Weathergrab;
 
 // cell_id,encounter_id,spawn_id,pokemon_type_id,latitude,longitude,despawn_time_ms,scan_time_ms
 //encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time
+@SuppressWarnings("unused")
 public class DataFormat {
 	static Path target = null;
 
 	public static void main(String[] args) throws IOException {
+		
 	}
 
 	private static void fixNullNulls(String string) throws IOException {
@@ -81,7 +83,7 @@ public class DataFormat {
 		}
 		try {
 			p.foreach(poke -> {
-				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
+				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.day);
 				String pokeString = poke.toString();
 				if (pokeString.endsWith(",null,null"))
 					pokeString = pokeString.substring(pokeString.length() - 1 - ",null,null".length());

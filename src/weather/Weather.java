@@ -18,10 +18,28 @@ public class Weather extends SpaceTime {
 		Pokemon testPoke = new Pokemon(test);
 		Weather w = new Weather(testPoke);
 		System.out.println(w.toString());
+		System.out.println(new Weather(test).toString());
+	}
+
+	public Double roundLocation(String d) {
+		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
 	public Double roundLocation(Double d) {
 		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
+	}
+
+	public Weather(String csv) throws ParseException {
+		String[] props = csv.split(",");
+		lat = roundLocation(props[3]);
+		lng = roundLocation(props[4]);
+		// it's stored in the pokemon format which is more specific, not the
+		// weather one.
+		day = Pokemon.sdf.parse(props[5]);
+		if (props.length > 6)
+			rainfall = Pokemon.getDoubleOrNull(props[6]);
+		if (props.length > 7)
+			temp = Pokemon.getDoubleOrNull(props[7]);
 	}
 
 	public Weather(Pokemon p) throws ParseException {

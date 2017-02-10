@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import weather.Weather;
-
 public class Pokemon extends SpaceTime implements Serializable {
 	private static final long serialVersionUID = 1L;
 	public static final String folder = "kempt data/";
@@ -107,7 +105,7 @@ public class Pokemon extends SpaceTime implements Serializable {
 			temp = getDoubleOrNull(props[7]);
 	}
 
-	private Double getDoubleOrNull(String x) {
+	public static Double getDoubleOrNull(String x) {
 		if (x == null)
 			return 0d;
 		x = x.trim();
