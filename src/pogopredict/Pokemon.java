@@ -12,16 +12,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Pokemon implements Serializable {
+import weather.Weather;
+
+public class Pokemon extends SpaceTime implements Serializable {
 	private static final long serialVersionUID = 1L;
 	public static final String folder = "kempt data/";
 	// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
-	// disappear_time
+	// day
 	String encounter_id = "", spawnpoint_id = "";
 	Integer pokemon_id = -1;
 	Double lat, lng, rainfall, temp;
 	// String originalCSV = "";
-	Date disappear_time;
+	Date day;
 
 	public String getEncounter_id() {
 		return encounter_id;
@@ -79,12 +81,12 @@ public class Pokemon implements Serializable {
 		this.temp = temp;
 	}
 
-	public Date getDisappear_time() {
-		return disappear_time;
+	public Date getDay() {
+		return day;
 	}
 
-	public void setDisappear_time(Date disappear_time) {
-		this.disappear_time = disappear_time;
+	public void setDay(Date day) {
+		this.day = day;
 	}
 
 	// 2016-09-08 13:32:44
@@ -97,7 +99,7 @@ public class Pokemon implements Serializable {
 		pokemon_id = Integer.parseInt(props[2]);
 		lat = Double.parseDouble(props[3]);
 		lng = Double.parseDouble(props[4]);
-		disappear_time = sdf.parse(props[5]);
+		day = sdf.parse(props[5]);
 		// if weather data present
 		if (props.length > 6)
 			rainfall = getDoubleOrNull(props[6]);
@@ -119,13 +121,9 @@ public class Pokemon implements Serializable {
 	@Override
 	public String toString() {
 		// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
-		// disappear_time
+		// day
 		return String.join(",", encounter_id, spawnpoint_id, pokemon_id.toString(), lat.toString(), lng.toString(),
-				sdf.format(disappear_time), rainfall + "", temp + "");
-	}
-
-	public boolean isNear(Pokemon b) {
-		return isNear(b, .01);
+				sdf.format(day), rainfall + "", temp + "");
 	}
 
 	public boolean equals(Pokemon obj) {
@@ -133,7 +131,8 @@ public class Pokemon implements Serializable {
 				&& pokemon_id.equals(obj.pokemon_id) && lat.equals(obj.lat) && lng.equals(obj.lng);
 	}
 
-	public boolean isNear(Pokemon b, double radius) {
+
+	public boolean isNear(SpaceTime b, double radius) {
 		double dlat = Math.abs(lat - b.lat), dlong = Math.abs(lng - b.lng);
 		if (dlat > radius || dlong > radius)
 			return false;

@@ -4,9 +4,11 @@ import java.text.ParseException;
 import java.util.Date;
 
 import pogopredict.Pokemon;
+import pogopredict.SpaceTime;
+
 import java.math.BigDecimal;
 
-public class Weather {
+public class Weather extends SpaceTime {
 
 	Double lat = 200d, lng = 200d, rainfall = -1d, temp = -200d;
 	Date day;
@@ -22,13 +24,12 @@ public class Weather {
 		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
-
 	public Weather(Pokemon p) throws ParseException {
 		lat = roundLocation(p.getLat());
 		lng = roundLocation(p.getLng());
 		rainfall = p.getRainfall();
 		temp = p.getTemp();
-		day = Weathergrab.sdf.parse(Weathergrab.sdf.format(p.getDisappear_time()));
+		day = Weathergrab.sdf.parse(Weathergrab.sdf.format(p.getDay()));
 	}
 
 	@Override
