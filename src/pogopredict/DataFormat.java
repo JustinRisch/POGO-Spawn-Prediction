@@ -1,13 +1,10 @@
 package pogopredict;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -22,10 +19,21 @@ import weather.Weathergrab;
 // cell_id,encounter_id,spawn_id,pokemon_type_id,latitude,longitude,despawn_time_ms,scan_time_ms
 //encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time
 public class DataFormat {
-	static Path target = Paths.get("kempt data/WEATHERED");
+	static Path target = null;
 
 	public static void main(String[] args) throws IOException {
-		addWeatherDataTo("fixLATLONG", Arrays.asList(1, 2, 3));
+	}
+
+	private static void fixNullNulls(String string) throws IOException {
+		target = Paths.get("kempt data/f" + string);
+		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
+		JavaSparkContext context = new JavaSparkContext(conf);
+		JavaRDD<String> f = context.textFile("kempt data/" + string);
+		Files.deleteIfExists(target);
+		Files.createFile(target);
+		f.map(e -> e.replace("null,null,", ""))
+				.foreach(e -> Files.write(target, (e + "\n").getBytes(), StandardOpenOption.APPEND));
+		context.close();
 	}
 
 	private static void checkLatLong(JavaRDD<Pokemon> p) throws InterruptedException {
@@ -57,23 +65,27 @@ public class DataFormat {
 	}
 
 	private static void addWeatherDataTo(String file, List<Integer> only) throws IOException {
-		String weatheredFile = Pokemon.folder +"WEATHERED "+only.toString().replace("[", "").replace("]", "").replaceAll(",", "");
+		String weatheredFile = Pokemon.folder + "WEATHERED "
+				+ only.toString().replace("[", "").replace("]", "").replaceAll(",", "");
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
 		JavaRDD<Pokemon> p = getPokemon(context, file, only);
 		if (!Files.exists(Paths.get(weatheredFile)))
 			Files.createFile(Paths.get(weatheredFile));
 		else {
-			List<String> w = context.textFile(weatheredFile).filter(f->f!=null && !f.trim().replaceAll("\n", "").isEmpty()).collect();
+			List<String> w = context.textFile(weatheredFile)
+					.filter(f -> f != null && !f.trim().replaceAll("\n", "").isEmpty()).collect();
 			List<Pokemon> pL = p.collect();
-			p = context.parallelize(pL.subList(w.size()-1, pL.size()-1));
+			p = context.parallelize(pL.subList(w.size() - 1, pL.size() - 1));
 
 		}
 		try {
-			
 			p.foreach(poke -> {
 				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
-				String out = (poke.toString() + "," + weather).replaceAll("\"", "") + "\n";
+				String pokeString = poke.toString();
+				if (pokeString.endsWith(",null,null"))
+					pokeString = pokeString.substring(pokeString.length() - 1 - ",null,null".length());
+				String out = (pokeString + "," + weather).replaceAll("\"", "") + "\n";
 				System.out.print(out);
 				Files.write(Paths.get(weatheredFile), out.getBytes(), StandardOpenOption.APPEND);
 				Thread.sleep(6000);
