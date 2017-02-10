@@ -57,13 +57,14 @@ public class DataFormat {
 	}
 
 	private static void addWeatherDataTo(String file, List<Integer> only) throws IOException {
+		String weatheredFile = Pokemon.folder +"WEATHERED "+only.toString().replace("[", "").replace("]", "").replaceAll(",", "");
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
 		JavaRDD<Pokemon> p = getPokemon(context, file, only);
-		if (!Files.exists(Paths.get(Pokemon.folder +"WEATHERED")))
-			Files.createFile(Paths.get(Pokemon.folder +"WEATHERED"));
+		if (!Files.exists(Paths.get(weatheredFile)))
+			Files.createFile(Paths.get(weatheredFile));
 		else {
-			List<String> w = context.textFile(Pokemon.folder +"WEATHERED").filter(f->f!=null && !f.trim().replaceAll("\n", "").isEmpty()).collect();
+			List<String> w = context.textFile(weatheredFile).filter(f->f!=null && !f.trim().replaceAll("\n", "").isEmpty()).collect();
 			List<Pokemon> pL = p.collect();
 			p = context.parallelize(pL.subList(w.size()-1, pL.size()-1));
 
@@ -74,7 +75,7 @@ public class DataFormat {
 				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.disappear_time);
 				String out = (poke.toString() + "," + weather).replaceAll("\"", "") + "\n";
 				System.out.print(out);
-				Files.write(target, out.getBytes(), StandardOpenOption.APPEND);
+				Files.write(Paths.get(weatheredFile), out.getBytes(), StandardOpenOption.APPEND);
 				Thread.sleep(6000);
 			});
 		} catch (Exception e) {
