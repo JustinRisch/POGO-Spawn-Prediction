@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class Pokemon implements Serializable {
 	private static final long serialVersionUID = 1L;
-	public static String folder = "kempt data/";
+	public static final String folder = "kempt data/";
 	// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
 	// disappear_time
 	String encounter_id = "", spawnpoint_id = "";
@@ -23,8 +23,73 @@ public class Pokemon implements Serializable {
 	// String originalCSV = "";
 	Date disappear_time;
 
+	public String getEncounter_id() {
+		return encounter_id;
+	}
+
+	public void setEncounter_id(String encounter_id) {
+		this.encounter_id = encounter_id;
+	}
+
+	public String getSpawnpoint_id() {
+		return spawnpoint_id;
+	}
+
+	public void setSpawnpoint_id(String spawnpoint_id) {
+		this.spawnpoint_id = spawnpoint_id;
+	}
+
+	public Integer getPokemon_id() {
+		return pokemon_id;
+	}
+
+	public void setPokemon_id(Integer pokemon_id) {
+		this.pokemon_id = pokemon_id;
+	}
+
+	public Double getLat() {
+		return lat;
+	}
+
+	public void setLat(Double lat) {
+		this.lat = lat;
+	}
+
+	public Double getLng() {
+		return lng;
+	}
+
+	public void setLng(Double lng) {
+		this.lng = lng;
+	}
+
+	public Double getRainfall() {
+		return rainfall;
+	}
+
+	public void setRainfall(Double rainfall) {
+		this.rainfall = rainfall;
+	}
+
+	public Double getTemp() {
+		return temp;
+	}
+
+	public void setTemp(Double temp) {
+		this.temp = temp;
+	}
+
+	public Date getDisappear_time() {
+		return disappear_time;
+	}
+
+	public void setDisappear_time(Date disappear_time) {
+		this.disappear_time = disappear_time;
+	}
+
 	// 2016-09-08 13:32:44
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
 	public Pokemon(String csv) throws ParseException {
 		String[] props = csv.split(",");
 		encounter_id = props[0];
