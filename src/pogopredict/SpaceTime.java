@@ -1,13 +1,17 @@
 package pogopredict;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
 import weather.Weathergrab;
 
-public abstract class SpaceTime {
-	Double lat, lng;
-	Date day;
+public abstract class SpaceTime implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	public Double lat;
+	public Double lng;
+	public Date day;
 
 	public Double getLat() {
 		return lat;
@@ -35,20 +39,30 @@ public abstract class SpaceTime {
 
 	@Override
 	public String toString() {
-		return String.join(",", lat + "", lng + "", Weathergrab.sdf.format(day));
+		if (day != null)
+			return String.join(",", lat + "", lng + "", Weathergrab.sdf.format(day));
+		else
+			return String.join(",", lat + "", lng + "", "");
+	}
+
+	public boolean isNear(SpaceTime b, double radius) {
+		double dlat = Math.abs(lat - b.lat), dlong = Math.abs(lng - b.lng);
+		if (dlat > radius || dlong > radius)
+			return false;
+		return (dlat * dlat) + (dlong * dlong) <= radius * radius;
 	}
 
 	public Double roundLocation(String d) {
-		return new BigDecimal(d).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
 	public Double roundLocation(Double d) {
-		return new BigDecimal(d).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
 	public boolean equals(SpaceTime obj) {
-		return roundLocation(lat).equals(roundLocation(obj.getLat()))
-				&& roundLocation(lng).equals(roundLocation(obj.getLng()))
-				&& Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
+		boolean isNear = this.isNear(obj, 10000);
+		boolean sameDay = Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
+		return isNear && sameDay;
 	}
 }

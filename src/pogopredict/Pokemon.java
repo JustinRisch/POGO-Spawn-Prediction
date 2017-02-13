@@ -126,7 +126,19 @@ public class Pokemon extends SpaceTime implements Serializable {
 		}
 
 	}
-
+	public SpaceTime getSpaceTime() {
+		SpaceTime s = new SpaceTime() {
+		};
+		s.lat = this.lat;
+		s.lng = this.lng;
+		s.day = this.day;
+		return s;
+	}
+	@Override
+	public boolean equals(SpaceTime obj) {
+		// TODO Auto-generated method stub
+		return this.getSpaceTime().equals(obj);
+	}
 	@Override
 	public String toString() {
 		// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
@@ -138,13 +150,6 @@ public class Pokemon extends SpaceTime implements Serializable {
 	public boolean equals(Pokemon obj) {
 		return encounter_id.equals(obj.encounter_id) && spawnpoint_id.equals(obj.spawnpoint_id)
 				&& pokemon_id.equals(obj.pokemon_id) && lat.equals(obj.lat) && lng.equals(obj.lng);
-	}
-
-	public boolean isNear(SpaceTime b, double radius) {
-		double dlat = Math.abs(lat - b.lat), dlong = Math.abs(lng - b.lng);
-		if (dlat > radius || dlong > radius)
-			return false;
-		return (dlat * dlat) + (dlong * dlong) <= radius * radius;
 	}
 
 	static final HashMap<Integer, String> pokedex = new HashMap<>();

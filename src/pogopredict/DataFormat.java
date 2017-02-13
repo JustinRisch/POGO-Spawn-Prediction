@@ -10,12 +10,15 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.scalatest.selenium.WebBrowser;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
@@ -32,25 +35,37 @@ public class DataFormat {
 	public static void main(String[] args) throws IOException, ParseException {
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
-
-		JavaPairRDD<Weather, Iterable<Pokemon>> pRDD = context.textFile("kempt data/fixLATLONG")
-				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p))
-				.filter(e -> e._1().getTemp() == null || e._1.getRainfall() == null);
+target = Paths.get("kempt data/WeatherCacheComplex"); 
+		JavaPairRDD<SpaceTime, Iterable<Pokemon>> pRDD = context.textFile("kempt data/WEATHERED 1 2 3")
+				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p).getSpaceTime());
 		HashMap<SpaceTime, Weather> weatherCache = new HashMap<>();
-		for (String s : Files.readAllLines(Paths.get("kempt data/WeatherCache"))) {
-			SpaceTime space = new Weather(s);
-			weatherCache.put(space, new Weather(s));
-		}
 
+		for (String s : Files.readAllLines(Paths.get("kempt data/WeatherCache"))) {
+			Weather space = new Weather(s);
+			weatherCache.put(space.getSpaceTime(), space);
+		}
+		long wSize = weatherCache.size(), pSize = pRDD.keys().count();
+		long total = pRDD.count();
 		pRDD.foreach(wp -> {
-			Weather w = wp._1;
-			
-			if (weatherCache.containsKey(w.getSpaceTime())) {
-				System.out.println("Weather Key: " + w.getSpaceTime().toString());
+			SpaceTime w = wp._1;
+			System.out.println("--------------------------------------------------------");
+			System.out.println("Looking for " + wp._1.getClass() + ", " + wp._1.toString() + "...");
+			Optional<SpaceTime> key = weatherCache.keySet().stream().filter(e -> e.equals(wp._1)).findFirst();
+			if (key.isPresent()) {
+				System.out.println("Weather Key: " + w.toString());
 				System.out.println("FOUND KEY!");
+				for (Pokemon p : wp._2){
+					// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
+					// day
+					//Files.write(target, String.join(",", p.encounter_id, p.spawnpoint_id, p.pokemon_id, p.lat, p.lng, p.day, w), options)
+				}
+			} else {
+				System.out.println("Not found. ");
 			}
 		});
-
+		System.out.println("pSize: " + pSize);
+		System.out.println("wSize: " + wSize);
+		System.out.println("total: " + total);
 		context.close();
 	}
 
