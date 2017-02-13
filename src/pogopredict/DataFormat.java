@@ -5,15 +5,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
+import scala.Tuple3;
+import weather.Weather;
 import weather.Weathergrab;
 
 // cell_id,encounter_id,spawn_id,pokemon_type_id,latitude,longitude,despawn_time_ms,scan_time_ms
@@ -22,8 +29,29 @@ import weather.Weathergrab;
 public class DataFormat {
 	static Path target = null;
 
-	public static void main(String[] args) throws IOException {
-		
+	public static void main(String[] args) throws IOException, ParseException {
+		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
+		JavaSparkContext context = new JavaSparkContext(conf);
+
+		JavaPairRDD<Weather, Iterable<Pokemon>> pRDD = context.textFile("kempt data/fixLATLONG")
+				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p))
+				.filter(e -> e._1().getTemp() == null || e._1.getRainfall() == null);
+		HashMap<SpaceTime, Weather> weatherCache = new HashMap<>();
+		for (String s : Files.readAllLines(Paths.get("kempt data/WeatherCache"))) {
+			SpaceTime space = new Weather(s);
+			weatherCache.put(space, new Weather(s));
+		}
+
+		pRDD.foreach(wp -> {
+			Weather w = wp._1;
+			
+			if (weatherCache.containsKey(w.getSpaceTime())) {
+				System.out.println("Weather Key: " + w.getSpaceTime().toString());
+				System.out.println("FOUND KEY!");
+			}
+		});
+
+		context.close();
 	}
 
 	private static void fixNullNulls(String string) throws IOException {

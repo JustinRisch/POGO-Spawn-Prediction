@@ -6,40 +6,67 @@ import java.util.Date;
 import pogopredict.Pokemon;
 import pogopredict.SpaceTime;
 
-import java.math.BigDecimal;
+import java.io.Serializable;
 
-public class Weather extends SpaceTime {
-
+public class Weather extends SpaceTime implements Serializable {
+	private static final long serialVersionUID = 1L;
 	Double lat = 200d, lng = 200d, rainfall = -1d, temp = -200d;
 	Date day;
 
-	public static void main(String[] args) throws ParseException {
-		String test = "0,0,1,52.5481150517243,13.3864913238756,2016-07-24 22:54:00,0.00,84";
-		Pokemon testPoke = new Pokemon(test);
-		Weather w = new Weather(testPoke);
-		System.out.println(w.toString());
-		System.out.println(new Weather(test).toString());
+	public Double getLat() {
+		return lat;
 	}
 
-	public Double roundLocation(String d) {
-		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
+	public void setLat(Double lat) {
+		this.lat = lat;
 	}
 
-	public Double roundLocation(Double d) {
-		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
+	public Double getLng() {
+		return lng;
+	}
+
+	public void setLng(Double lng) {
+		this.lng = lng;
+	}
+
+	public Double getRainfall() {
+		return rainfall;
+	}
+
+	public void setRainfall(Double rainfall) {
+		this.rainfall = rainfall;
+	}
+
+	public Double getTemp() {
+		return temp;
+	}
+
+	public void setTemp(Double temp) {
+		this.temp = temp;
+	}
+
+	public Date getDay() {
+		return day;
+	}
+
+	public void setDay(Date day) {
+		this.day = day;
+	}
+
+	public SpaceTime getSpaceTime() {
+		return this;
 	}
 
 	public Weather(String csv) throws ParseException {
 		String[] props = csv.split(",");
-		lat = roundLocation(props[3]);
-		lng = roundLocation(props[4]);
+		lat = roundLocation(props[0]);
+		lng = roundLocation(props[1]);
 		// it's stored in the pokemon format which is more specific, not the
 		// weather one.
-		day = Pokemon.sdf.parse(props[5]);
-		if (props.length > 6)
-			rainfall = Pokemon.getDoubleOrNull(props[6]);
-		if (props.length > 7)
-			temp = Pokemon.getDoubleOrNull(props[7]);
+		day = Weathergrab.sdf.parse(props[2]);
+		rainfall = Pokemon.getDoubleOrNull(props[3]);
+		temp = Pokemon.getDoubleOrNull(props[4]);
+
 	}
 
 	public Weather(Pokemon p) throws ParseException {

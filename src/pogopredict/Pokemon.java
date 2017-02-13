@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import weather.Weathergrab;
+
 public class Pokemon extends SpaceTime implements Serializable {
 	private static final long serialVersionUID = 1L;
 	public static final String folder = "kempt data/";
@@ -105,14 +107,23 @@ public class Pokemon extends SpaceTime implements Serializable {
 			temp = getDoubleOrNull(props[7]);
 	}
 
-	public static Double getDoubleOrNull(String x) {
-		if (x == null)
-			return 0d;
-		x = x.trim();
-		if (x.isEmpty() || x.equalsIgnoreCase("NULL"))
-			return 0d;
+	public Date getWeatherDay() throws ParseException {
+		return Weathergrab.sdf.parse(Weathergrab.sdf.format(this.day));
+	}
 
-		return Double.valueOf(x);
+	public static Double getDoubleOrNull(String x) {
+		try {
+			if (x == null)
+				return 0d;
+			x = x.trim();
+			if (x.isEmpty() || x.equalsIgnoreCase("NULL"))
+				return 0d;
+
+			return Double.valueOf(x);
+			// in the case of "T" error
+		} catch (NumberFormatException e) {
+			return 0d;
+		}
 
 	}
 
@@ -128,7 +139,6 @@ public class Pokemon extends SpaceTime implements Serializable {
 		return encounter_id.equals(obj.encounter_id) && spawnpoint_id.equals(obj.spawnpoint_id)
 				&& pokemon_id.equals(obj.pokemon_id) && lat.equals(obj.lat) && lng.equals(obj.lng);
 	}
-
 
 	public boolean isNear(SpaceTime b, double radius) {
 		double dlat = Math.abs(lat - b.lat), dlong = Math.abs(lng - b.lng);

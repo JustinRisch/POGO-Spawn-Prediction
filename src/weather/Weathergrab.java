@@ -19,7 +19,7 @@ import net.sf.corn.httpclient.HttpClient.HTTP_METHOD;
 public class Weathergrab {
 	private static String wukey = "0b0bbc6b532e7d06";
 	static Double lat = 37.5968974, lng = -77.3552527;
-	static SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
 	public static void main(String[] args) throws ParsingException, URISyntaxException, IOException,
 			net.sf.corn.converter.ParsingException, ParseException {
