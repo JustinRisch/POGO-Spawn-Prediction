@@ -35,37 +35,41 @@ public class DataFormat {
 	public static void main(String[] args) throws IOException, ParseException {
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
-target = Paths.get("kempt data/WeatherCacheComplex"); 
-		JavaPairRDD<SpaceTime, Iterable<Pokemon>> pRDD = context.textFile("kempt data/WEATHERED 1 2 3")
+		target = Paths.get("kempt data/WeatherCacheComplex");
+		JavaPairRDD<SpaceTime, Iterable<Pokemon>> pRDD = context.textFile("kempt data/fixLATLONG")
 				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p).getSpaceTime());
 		HashMap<SpaceTime, Weather> weatherCache = new HashMap<>();
 
 		for (String s : Files.readAllLines(Paths.get("kempt data/WeatherCache"))) {
 			Weather space = new Weather(s);
-			weatherCache.put(space.getSpaceTime(), space);
+			if (space.getRainfall() != null || space.getTemp() != null)
+				weatherCache.put(space.getSpaceTime(), space);
 		}
-		long wSize = weatherCache.size(), pSize = pRDD.keys().count();
-		long total = pRDD.count();
+		Files.deleteIfExists(target);
+		Files.createFile(target);
+		StringBuilder sb = new StringBuilder();
+		AtomicInteger total = new AtomicInteger(0), matches = new AtomicInteger(0);
+
 		pRDD.foreach(wp -> {
 			SpaceTime w = wp._1;
-			System.out.println("--------------------------------------------------------");
-			System.out.println("Looking for " + wp._1.getClass() + ", " + wp._1.toString() + "...");
+			total.getAndIncrement();
 			Optional<SpaceTime> key = weatherCache.keySet().stream().filter(e -> e.equals(wp._1)).findFirst();
 			if (key.isPresent()) {
-				System.out.println("Weather Key: " + w.toString());
-				System.out.println("FOUND KEY!");
-				for (Pokemon p : wp._2){
-					// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
-					// day
-					//Files.write(target, String.join(",", p.encounter_id, p.spawnpoint_id, p.pokemon_id, p.lat, p.lng, p.day, w), options)
-				}
-			} else {
-				System.out.println("Not found. ");
+				Weather realWeather = weatherCache.get(key.get());
+				wp._2.forEach(p -> sb.append(String.join(",", p.toStringNoWeather(), realWeather.getRainfall() + "",
+						realWeather.getTemp() + "") + "\n"));
+				matches.getAndIncrement();
+			} else { // if there's no key found, just write the original info.
+				wp._2.forEach(p -> sb.append(p.toString() + "\n"));
+			}
+			if (sb.length() >= 200000) {
+				Files.write(target, sb.toString().getBytes(), StandardOpenOption.APPEND);
+				sb.setLength(0);
+				System.out.println(matches.get() + "/" + total.get());
 			}
 		});
-		System.out.println("pSize: " + pSize);
-		System.out.println("wSize: " + wSize);
-		System.out.println("total: " + total);
+		System.out.println("Total: " + total.get());
+		System.out.println("Matches: " + matches.get());
 		context.close();
 	}
 

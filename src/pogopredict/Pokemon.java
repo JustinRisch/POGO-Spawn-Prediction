@@ -126,6 +126,7 @@ public class Pokemon extends SpaceTime implements Serializable {
 		}
 
 	}
+
 	public SpaceTime getSpaceTime() {
 		SpaceTime s = new SpaceTime() {
 		};
@@ -134,17 +135,21 @@ public class Pokemon extends SpaceTime implements Serializable {
 		s.day = this.day;
 		return s;
 	}
+
 	@Override
 	public boolean equals(SpaceTime obj) {
-		// TODO Auto-generated method stub
 		return this.getSpaceTime().equals(obj);
 	}
+
 	@Override
 	public String toString() {
-		// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
-		// day
 		return String.join(",", encounter_id, spawnpoint_id, pokemon_id.toString(), lat.toString(), lng.toString(),
 				sdf.format(day), rainfall + "", temp + "");
+	}
+
+	public String toStringNoWeather() {
+		return String.join(",", encounter_id, spawnpoint_id, pokemon_id.toString(), lat.toString(), lng.toString(),
+				sdf.format(day));
 	}
 
 	public boolean equals(Pokemon obj) {

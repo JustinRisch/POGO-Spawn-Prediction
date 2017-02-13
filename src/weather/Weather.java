@@ -62,16 +62,6 @@ public class Weather extends SpaceTime {
 		temp = Pokemon.getDoubleOrNull(props[4]);
 
 	}
-
-	public boolean equals(SpaceTime obj) {
-		boolean isNear = this.isNear(obj, 10000);
-		System.out.println("isNear? " + isNear);
-		boolean sameDay = Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
-		System.out.println("Same day? " + sameDay);
-
-		return isNear && sameDay;
-	}
-
 	public SpaceTime getSpaceTime() {
 		SpaceTime s = new SpaceTime() {
 		};

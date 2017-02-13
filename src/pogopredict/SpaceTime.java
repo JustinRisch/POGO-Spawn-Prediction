@@ -53,15 +53,15 @@ public abstract class SpaceTime implements Serializable {
 	}
 
 	public Double roundLocation(String d) {
-		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return new BigDecimal(d).setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
 	public Double roundLocation(Double d) {
-		return new BigDecimal(d).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return new BigDecimal(d).setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
 	public boolean equals(SpaceTime obj) {
-		boolean isNear = this.isNear(obj, 10000);
+		boolean isNear = this.isNear(obj, .01);
 		boolean sameDay = Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
 		return isNear && sameDay;
 	}
