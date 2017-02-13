@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -54,14 +53,18 @@ public class DataFormat {
 			SpaceTime w = wp._1;
 			total.getAndIncrement();
 			Optional<SpaceTime> key = weatherCache.keySet().stream().filter(e -> e.equals(wp._1)).findFirst();
+			Weather realWeather;
 			if (key.isPresent()) {
-				Weather realWeather = weatherCache.get(key.get());
-				wp._2.forEach(p -> sb.append(String.join(",", p.toStringNoWeather(), realWeather.getRainfall() + "",
-						realWeather.getTemp() + "") + "\n"));
+				realWeather = weatherCache.get(key.get());
 				matches.getAndIncrement();
 			} else { // if there's no key found, just write the original info.
-				wp._2.forEach(p -> sb.append(p.toString() + "\n"));
+				realWeather = Weathergrab.getHistoricalWeather(w.lat, w.lng, w.day);
+				System.out.println(realWeather.toString());
+				weatherCache.put(realWeather.getSpaceTime(), realWeather);
 			}
+			wp._2.forEach(p -> sb.append(
+					String.join(",", p.toStringNoWeather(), realWeather.getRainfall() + "", realWeather.getTemp() + "")
+							+ "\n"));
 			if (sb.length() >= 200000) {
 				Files.write(target, sb.toString().getBytes(), StandardOpenOption.APPEND);
 				sb.setLength(0);
@@ -130,11 +133,11 @@ public class DataFormat {
 		}
 		try {
 			p.foreach(poke -> {
-				String weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.day);
+				Weather weather = Weathergrab.getHistoricalWeather(poke.lat, poke.lng, poke.day);
 				String pokeString = poke.toString();
 				if (pokeString.endsWith(",null,null"))
 					pokeString = pokeString.substring(pokeString.length() - 1 - ",null,null".length());
-				String out = (pokeString + "," + weather).replaceAll("\"", "") + "\n";
+				String out = (pokeString + "," + weather.getRainfall() +"," + weather.getTemp()).replaceAll("\"", "") + "\n";
 				System.out.print(out);
 				Files.write(Paths.get(weatheredFile), out.getBytes(), StandardOpenOption.APPEND);
 				Thread.sleep(6000);

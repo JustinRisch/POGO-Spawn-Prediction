@@ -62,6 +62,7 @@ public class Weather extends SpaceTime {
 		temp = Pokemon.getDoubleOrNull(props[4]);
 
 	}
+
 	public SpaceTime getSpaceTime() {
 		SpaceTime s = new SpaceTime() {
 		};
@@ -77,6 +78,21 @@ public class Weather extends SpaceTime {
 		rainfall = p.getRainfall();
 		temp = p.getTemp();
 		day = Weathergrab.sdf.parse(Weathergrab.sdf.format(p.getDay()));
+	}
+
+	public Weather(Double lat, Double lng, Date day) {
+		this.lat = roundLocation(lat);
+		this.lng = roundLocation(lng);
+		this.day = day;
+		this.rainfall = null;
+		this.temp = null;
+	}
+	public Weather(Double lat, Double lng, Date day, Double rain, Double temp) {
+		this.lat = roundLocation(lat);
+		this.lng = roundLocation(lng);
+		this.day = day;
+		this.rainfall = rain;
+		this.temp = temp;
 	}
 
 	@Override

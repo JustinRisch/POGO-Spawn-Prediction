@@ -30,11 +30,15 @@ public class Weathergrab {
 	static String wUrl = "http://api.wunderground.com/api/";
 
 	// 0b0bbc6b532e7d06/history_YYYYMMDD/q/CA/San_Francisco.json
-	public static String getHistoricalWeather(Double lat, Double lng, Date date)
+	public static Weather getHistoricalWeather(Double lat, Double lng, Date date)
 			throws ParsingException, URISyntaxException, IOException, net.sf.corn.converter.ParsingException {
 		String weatherUrl = wUrl + wukey + "/history_" + sdf.format(date) + "/q/" + lat + "," + lng + ".json";
 		System.out.println("call: " + weatherUrl);
-		return fetchWeather(weatherUrl);
+		String[] x = fetchWeather(weatherUrl).split(",");
+		if (x[0].contains("null"))
+			return new Weather(lat, lng, date);
+		else
+			return new Weather(lat, lng, date, Double.parseDouble(x[0]), Double.parseDouble(x[1]));
 	}
 
 	private static String fetchWeather(String url)
@@ -50,12 +54,12 @@ public class Weathergrab {
 				JsTypeComplex date = ((JsTypeComplex) sum.get(0));
 				JsTypeSimple precipi = (JsTypeSimple) date.get("precipi");
 				JsTypeSimple maxTempi = (JsTypeSimple) date.get("maxtempi");
-				return precipi + "," + maxTempi;
+				return (precipi + "," + maxTempi).replaceAll("\"", "");
 			}
 		} catch (Exception e) {
-			System.out.println("No data found.");
+			System.out.println("No data found,");
 		}
-		return "-1,-99";
+		return "null,null";
 	}
 
 }
