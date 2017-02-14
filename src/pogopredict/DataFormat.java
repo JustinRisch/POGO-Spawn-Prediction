@@ -44,6 +44,9 @@ public class DataFormat {
 			if (space.getRainfall() != null || space.getTemp() != null)
 				weatherCache.put(space.getSpaceTime(), space);
 		}
+		context.textFile("kempt data/WeatherCacheComplex").filter(f -> !f.trim().isEmpty()).map(f -> new Pokemon(f))
+				.map(f -> new Weather(f)).filter(f -> f.getRainfall() != null && f.getTemp() != null)
+				.foreach(f -> weatherCache.put(f.getSpaceTime(), f));
 		Files.deleteIfExists(target);
 		Files.createFile(target);
 		StringBuilder sb = new StringBuilder();
