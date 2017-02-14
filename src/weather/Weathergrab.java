@@ -12,6 +12,8 @@ import net.sf.corn.converter.json.JsTypeList;
 import net.sf.corn.converter.json.JsTypeSimple;
 import net.sf.corn.converter.json.JsonStringParser;
 import net.sf.corn.httpclient.HttpResponse;
+import pogopredict.Pokemon;
+
 import java.util.Date;
 import net.sf.corn.httpclient.HttpClient;
 import net.sf.corn.httpclient.HttpClient.HTTP_METHOD;
@@ -35,10 +37,10 @@ public class Weathergrab {
 		String weatherUrl = wUrl + wukey + "/history_" + sdf.format(date) + "/q/" + lat + "," + lng + ".json";
 		System.out.println("call: " + weatherUrl);
 		String[] x = fetchWeather(weatherUrl).split(",");
-		if (x[0].contains("null"))
+		if (x[0].contains("null") || x.length<2)
 			return new Weather(lat, lng, date);
 		else
-			return new Weather(lat, lng, date, Double.parseDouble(x[0]), Double.parseDouble(x[1]));
+			return new Weather(lat, lng, date, Pokemon.getDoubleOrNull(x[0]), Pokemon.getDoubleOrNull(x[1]));
 	}
 
 	private static String fetchWeather(String url)

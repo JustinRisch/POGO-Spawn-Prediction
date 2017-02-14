@@ -68,7 +68,7 @@ public class DataFormat {
 			wp._2.forEach(p -> sb.append(
 					String.join(",", p.toStringNoWeather(), realWeather.getRainfall() + "", realWeather.getTemp() + "")
 							+ "\n"));
-			if (sb.length() >= 200000) {
+			if (sb.length() >= 100000) {
 				Files.write(target, sb.toString().getBytes(), StandardOpenOption.APPEND);
 				sb.setLength(0);
 				System.out.println(matches.get() + "/" + total.get());
@@ -140,7 +140,8 @@ public class DataFormat {
 				String pokeString = poke.toString();
 				if (pokeString.endsWith(",null,null"))
 					pokeString = pokeString.substring(pokeString.length() - 1 - ",null,null".length());
-				String out = (pokeString + "," + weather.getRainfall() +"," + weather.getTemp()).replaceAll("\"", "") + "\n";
+				String out = (pokeString + "," + weather.getRainfall() + "," + weather.getTemp()).replaceAll("\"", "")
+						+ "\n";
 				System.out.print(out);
 				Files.write(Paths.get(weatheredFile), out.getBytes(), StandardOpenOption.APPEND);
 				Thread.sleep(6000);
