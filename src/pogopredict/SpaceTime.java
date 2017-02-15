@@ -62,6 +62,8 @@ public abstract class SpaceTime implements Serializable {
 
 	public boolean equals(SpaceTime obj) {
 		boolean isNear = this.isNear(obj, .01);
+		if (!isNear) // short cut for speed
+			return false;
 		boolean sameDay = Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
 		return isNear && sameDay;
 	}

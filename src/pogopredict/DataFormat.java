@@ -34,24 +34,27 @@ public class DataFormat {
 	public static void main(String[] args) throws IOException, ParseException {
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
-		target = Paths.get("kempt data/WeatherCacheComplex");
-		JavaPairRDD<SpaceTime, Iterable<Pokemon>> pRDD = context.textFile("kempt data/fixLATLONG")
-				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p).getSpaceTime());
 		HashMap<SpaceTime, Weather> weatherCache = new HashMap<>();
-
+		target = Paths.get("kempt data/WeatherCacheComplex2");
 		for (String s : Files.readAllLines(Paths.get("kempt data/WeatherCache"))) {
 			Weather space = new Weather(s);
-			if (space.getRainfall() != null || space.getTemp() != null)
-				weatherCache.put(space.getSpaceTime(), space);
+			weatherCache.put(space.getSpaceTime(), space);
 		}
-		context.textFile("kempt data/WeatherCacheComplex").filter(f -> !f.trim().isEmpty()).map(f -> new Pokemon(f))
-				.map(f -> new Weather(f)).filter(f -> f.getRainfall() != null && f.getTemp() != null)
-				.foreach(f -> weatherCache.put(f.getSpaceTime(), f));
+		for (String s : Files.readAllLines(Paths.get("kempt data/WeatherCacheComplex"))) {
+			if (s.trim().isEmpty())
+				continue;
+			Weather space = new Weather( new Pokemon(s));
+			weatherCache.put(space.getSpaceTime(), space);
+		}
+		JavaPairRDD<SpaceTime, Iterable<Pokemon>> pRDD = context.textFile("kempt data/fixLATLONG")
+				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p).getSpaceTime());
+		
 		Files.deleteIfExists(target);
 		Files.createFile(target);
 		StringBuilder sb = new StringBuilder();
 		AtomicInteger total = new AtomicInteger(0), matches = new AtomicInteger(0);
-
+		System.out.println("Cache Size: " + weatherCache.keySet().size());
+		
 		pRDD.foreach(wp -> {
 			SpaceTime w = wp._1;
 			total.getAndIncrement();
@@ -62,7 +65,6 @@ public class DataFormat {
 				matches.getAndIncrement();
 			} else { // if there's no key found, just write the original info.
 				realWeather = Weathergrab.getHistoricalWeather(w.lat, w.lng, w.day);
-				System.out.println(realWeather.toString());
 				weatherCache.put(realWeather.getSpaceTime(), realWeather);
 			}
 			wp._2.forEach(p -> sb.append(
@@ -71,7 +73,7 @@ public class DataFormat {
 			if (sb.length() >= 100000) {
 				Files.write(target, sb.toString().getBytes(), StandardOpenOption.APPEND);
 				sb.setLength(0);
-				System.out.println(matches.get() + "/" + total.get());
+				System.out.println(matches.get() + "/" + total.get() + " Calls: " + (total.get() - matches.get()));
 			}
 		});
 		System.out.println("Total: " + total.get());

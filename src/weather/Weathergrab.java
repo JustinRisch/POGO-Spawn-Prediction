@@ -19,7 +19,10 @@ import net.sf.corn.httpclient.HttpClient;
 import net.sf.corn.httpclient.HttpClient.HTTP_METHOD;
 
 public class Weathergrab {
-	private static String wukey = "0b0bbc6b532e7d06";
+	@SuppressWarnings("unused")
+	private static String wukey = "0b0bbc6b532e7d06",
+			wukey2 ="458d08d6835b3d24";
+	
 	static Double lat = 37.5968974, lng = -77.3552527;
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
@@ -34,8 +37,8 @@ public class Weathergrab {
 	// 0b0bbc6b532e7d06/history_YYYYMMDD/q/CA/San_Francisco.json
 	public static Weather getHistoricalWeather(Double lat, Double lng, Date date)
 			throws ParsingException, URISyntaxException, IOException, net.sf.corn.converter.ParsingException {
-		String weatherUrl = wUrl + wukey + "/history_" + sdf.format(date) + "/q/" + lat + "," + lng + ".json";
-		System.out.println("call: " + weatherUrl);
+		String weatherUrl = wUrl + wukey2 + "/history_" + sdf.format(date) + "/q/" + lat + "," + lng + ".json";
+		//System.out.println("call: " + weatherUrl);
 		String[] x = fetchWeather(weatherUrl).split(",");
 		if (x[0].contains("null") || x.length<2)
 			return new Weather(lat, lng, date);
@@ -59,7 +62,7 @@ public class Weathergrab {
 				return (precipi + "," + maxTempi).replaceAll("\"", "");
 			}
 		} catch (Exception e) {
-			System.out.println("No data found,");
+		
 		}
 		return "null,null";
 	}
