@@ -30,7 +30,7 @@ import weather.Weathergrab;
 @SuppressWarnings("unused")
 public class DataFormat {
 	static Path target = null;
-
+	
 	public static void main(String[] args) throws IOException, ParseException {
 		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
 		JavaSparkContext context = new JavaSparkContext(conf);
@@ -48,7 +48,6 @@ public class DataFormat {
 		}
 		JavaPairRDD<SpaceTime, Iterable<Pokemon>> pRDD = context.textFile("kempt data/fixLATLONG")
 				.map(p -> new Pokemon(p)).groupBy(p -> new Weather(p).getSpaceTime());
-		
 		Files.deleteIfExists(target);
 		Files.createFile(target);
 		StringBuilder sb = new StringBuilder();
@@ -78,18 +77,6 @@ public class DataFormat {
 		});
 		System.out.println("Total: " + total.get());
 		System.out.println("Matches: " + matches.get());
-		context.close();
-	}
-
-	private static void fixNullNulls(String string) throws IOException {
-		target = Paths.get("kempt data/f" + string);
-		SparkConf conf = new SparkConf().setAppName("org.sparkexample.WordCount").setMaster("local");
-		JavaSparkContext context = new JavaSparkContext(conf);
-		JavaRDD<String> f = context.textFile("kempt data/" + string);
-		Files.deleteIfExists(target);
-		Files.createFile(target);
-		f.map(e -> e.replace("null,null,", ""))
-				.foreach(e -> Files.write(target, (e + "\n").getBytes(), StandardOpenOption.APPEND));
 		context.close();
 	}
 

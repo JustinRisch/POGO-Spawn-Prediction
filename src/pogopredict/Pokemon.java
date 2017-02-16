@@ -15,16 +15,18 @@ import java.util.stream.Collectors;
 import weather.Weathergrab;
 
 public class Pokemon extends SpaceTime implements Serializable {
-	private static final long serialVersionUID = 1L;
-	public static final String folder = "kempt data/";
-	// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
-	// day
 	String encounter_id = "", spawnpoint_id = "";
 	Integer pokemon_id = -1;
 	Double lat, lng, rainfall, temp;
-	// String originalCSV = "";
 	Date day;
+	
+	private static final long serialVersionUID = 1L;
+	public static final String folder = "kempt data/";
 
+	
+
+	// encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
+	// day
 	public String getEncounter_id() {
 		return encounter_id;
 	}

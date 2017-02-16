@@ -60,11 +60,15 @@ public abstract class SpaceTime implements Serializable {
 		return new BigDecimal(d).setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 
+	private boolean isSameDay(SpaceTime obj) {
+		return Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
+	}
+
 	public boolean equals(SpaceTime obj) {
-		boolean isNear = this.isNear(obj, .01);
-		if (!isNear) // short cut for speed
+		if (!this.isNear(obj, .01))
 			return false;
-		boolean sameDay = Weathergrab.sdf.format(this.getDay()).equals(Weathergrab.sdf.format(obj.getDay()));
-		return isNear && sameDay;
+		if (!this.isSameDay(obj))
+			return false;
+		return true;
 	}
 }
